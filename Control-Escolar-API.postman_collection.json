@@ -1,0 +1,406 @@
+{
+  "info": {
+    "name": "Control Escolar API",
+    "description": "Colección de endpoints para el Sistema de Gestión y Reporte de Calificaciones Escolares",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Inicia sesión con credenciales y retorna un token JWT.\n\nCuentas de prueba disponibles (seeders):\n- Admin: admin@gmail.com / 123456\n- Maestro 1: pedroa@gmail.com / 123456\n- Maestro 2: juan@gmail.com / 123456"
+          },
+          "response": []
+        },
+        {
+          "name": "Registro (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nuevo Maestro\",\n  \"email\": \"maestro3@escuela.com\",\n  \"password\": \"password123\",\n  \"rol\": \"maestro\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/auth/registro",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "auth", "registro"]
+            },
+            "description": "Registra un nuevo usuario. Solo usuarios con rol 'control_escolar' pueden crear nuevos usuarios.\n\nRoles permitidos: 'maestro', 'control_escolar'"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Maestro - Calificaciones",
+      "item": [
+        {
+          "name": "Obtener Alumnos Asignados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/maestro/alumnos",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "maestro", "alumnos"]
+            },
+            "description": "Obtiene la lista de alumnos asignados al maestro autenticado.\n\nRequiere: Token JWT de maestro"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Calificación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alumno_id\": 1,\n  \"materia_id\": 1,\n  \"nota\": 85,\n  \"observaciones\": \"Alumno participa activamente en clase\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/maestro/calificaciones",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "maestro", "calificaciones"]
+            },
+            "description": "Crea una nueva calificación o actualiza una existente.\n\nCampos requeridos:\n- alumno_id: ID del alumno\n- materia_id: ID de la materia\n- nota: Valor numérico entre 0 y 100\n\nCampos opcionales:\n- observaciones: Texto con observaciones\n\nRequiere: Token JWT de maestro"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mis Calificaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/maestro/calificaciones",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "maestro", "calificaciones"]
+            },
+            "description": "Obtiene todas las calificaciones registradas por el maestro autenticado.\n\nRequiere: Token JWT de maestro"
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Calificación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nota\": 90,\n  \"observaciones\": \"Nota actualizada - mejora en desempeño\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/maestro/calificaciones/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "maestro", "calificaciones", "1"]
+            },
+            "description": "Edita una calificación existente registrada por el maestro.\n\nCampos editables:\n- nota: Nuevo valor entre 0 y 100\n- observaciones: Nuevas observaciones\n\nRequiere: Token JWT de maestro\nRestrición: Solo puede editar sus propias calificaciones"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Control Escolar - Reportes",
+      "item": [
+        {
+          "name": "Obtener Reporte General",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/reporte",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "reporte"]
+            },
+            "description": "Obtiene un reporte completo de todas las calificaciones registradas en el sistema.\n\nIncluye información de:\n- Alumno (nombre, matrícula, grupo)\n- Materia\n- Nota\n- Maestro que registró\n- Fecha de registro\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Promedios Globales",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/reporte-promedios",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "reporte-promedios"]
+            },
+            "description": "Obtiene los promedios globales del sistema:\n\n- Promedio general (todas las calificaciones)\n- Promedios por alumno\n- Promedios por materia\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Control Escolar - Gestión",
+      "item": [
+        {
+          "name": "Eliminar Calificación (Soft Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/calificaciones/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "calificaciones", "1"]
+            },
+            "description": "Elimina una calificación usando soft delete (no elimina físicamente de la BD).\n\nParámetro:\n- id: ID de la calificación a eliminar\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Calificación (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nota\": 95,\n  \"observaciones\": \"Nota corregida por error de registro\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/calificaciones/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "calificaciones", "1"]
+            },
+            "description": "Edita cualquier calificación del sistema (sin restricción de propietario).\n\nCampos editables:\n- nota: Nuevo valor entre 0 y 100\n- observaciones: Nuevas observaciones\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nuevo Maestro\",\n  \"email\": \"maestro4@escuela.com\",\n  \"password\": \"password123\",\n  \"rol\": \"maestro\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/usuarios",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "usuarios"]
+            },
+            "description": "Crea un nuevo usuario (maestro o control_escolar).\n\nCampos requeridos:\n- nombre: Nombre completo\n- email: Email único\n- password: Contraseña\n- rol: 'maestro' o 'control_escolar'\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Maestros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/maestros",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "maestros"]
+            },
+            "description": "Obtiene la lista de todos los maestros registrados en el sistema.\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Alumnos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/controlescolar/alumnos",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "controlescolar", "alumnos"]
+            },
+            "description": "Obtiene la lista de todos los alumnos del sistema.\n\nRequiere: Token JWT de Control Escolar (admin)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Materias",
+      "item": [
+        {
+          "name": "Obtener Todas las Materias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/materias",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "materias"]
+            },
+            "description": "Obtiene la lista de todas las materias disponibles en el sistema.\n\nNota: Este endpoint es público (no requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Grupos",
+      "item": [
+        {
+          "name": "Obtener Todos los Grupos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/grupos",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "grupos"]
+            },
+            "description": "Obtiene la lista de todos los grupos disponibles.\n\nNota: Este endpoint es público (no requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Token obtenido del endpoint de login. Pegue aquí el token después de iniciar sesión."
+    }
+  ]
+}

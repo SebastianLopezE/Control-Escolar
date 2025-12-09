@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 
@@ -23,7 +23,13 @@ RUN npm install -g serve
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
 
+# Cambiar permisos del directorio
+RUN chown -R nodejs:nodejs /app
+
 COPY --from=build /app/dist ./dist
+
+# Crear un package.json mínimo para serve
+RUN echo '{"name":"frontend","version":"1.0.0"}' > /app/package.json
 
 USER nodejs
 

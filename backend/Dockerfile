@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm ci --only=production
+RUN npm install --production
 
 # Copiar el resto del código
 COPY . .
@@ -16,6 +16,10 @@ COPY . .
 # Crear un usuario no-root por seguridad
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
+
+# Cambiar permisos del directorio
+RUN chown -R nodejs:nodejs /app
+
 USER nodejs
 
 # Exponer el puerto
