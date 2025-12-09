@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: control_escolar_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: control_escolar
+      POSTGRES_USER: control_user
+      POSTGRES_PASSWORD: control_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U control_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: control_escolar_api
+    depends_on:
+      postgres:
+        condition: service_healthy # Asegura que la base de datos esté lista antes de iniciar el backend
+    environment:
+      DATABASE_URL: postgres://control_user:control_pass@postgres:5432/control_escolar
+      PORT: 3000
+      JWT_SECRET: 123456789abcdef # clave secreta para token JWT
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    command: ["npm", "start"]
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: control_escolar_frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    ports:
+      - "5173:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:

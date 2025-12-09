@@ -1,4 +1,4 @@
-const { models } = require("../models");
+const { sequelize, models } = require("../models");
 const { alumnos, calificaciones, materias, usuarios, grupos, cursos } = models;
 const bcrypt = require("bcryptjs");
 
@@ -8,18 +8,116 @@ exports.obtenerReporte = async (req, res) => {
     const reporte = await calificaciones.findAll({
       where: { deleted_at: null },
       include: [
-        { model: alumnos, attributes: ["id", "nombre", "matricula"] },
-        { model: materias, attributes: ["id", "nombre", "codigo"] },
-        { model: usuarios, attributes: ["id", "nombre", "email"] },
+        {
+          model: alumnos,
+          as: "alumno",
+          attributes: ["id", "nombre", "matricula", "grupo_id"],
+          include: [{ model: grupos, as: "grupo", attributes: ["nombre"] }],
+        },
+        {
+          model: materias,
+          as: "materium",
+          attributes: ["id", "nombre", "codigo"],
+        },
+        {
+          model: usuarios,
+          as: "maestro",
+          attributes: ["id", "nombre", "email"],
+        },
       ],
       order: [["fecha_registro", "DESC"]],
     });
 
-    res.json({ mensaje: "Reporte de calificaciones", datos: reporte });
+    const datos = reporte.map((r) => ({
+      id: r.id,
+      alumno_id: r.alumno_id,
+      alumno_nombre: r.alumno?.nombre || null,
+      alumno_matricula: r.alumno?.matricula || null,
+      grupo: r.alumno?.grupo?.nombre || null,
+      materia_id: r.materia_id,
+      materia_nombre: r.materium?.nombre || null,
+      nota: r.nota,
+      observaciones: r.observaciones,
+      maestro_id: r.maestro_id,
+      maestro_nombre: r.maestro?.nombre || null,
+      fecha_registro: r.fecha_registro,
+    }));
+
+    res.json({ mensaje: "Reporte de calificaciones", datos });
   } catch (error) {
     res
       .status(500)
       .json({ mensaje: "Error al obtener reporte", error: error.message });
+  }
+};
+
+// Promedios globales (general, por alumno, por materia)
+exports.obtenerPromedios = async (_req, res) => {
+  try {
+    // Promedio general
+    const general = await calificaciones.findOne({
+      attributes: [[sequelize.fn("AVG", sequelize.col("nota")), "promedio"]],
+      where: { deleted_at: null },
+      raw: true,
+    });
+
+    // Promedio por alumno
+    const porAlumno = await calificaciones.findAll({
+      attributes: [
+        "alumno_id",
+        [sequelize.fn("AVG", sequelize.col("nota")), "promedio"],
+      ],
+      where: { deleted_at: null },
+      group: ["alumno_id"],
+      include: [
+        {
+          model: alumnos,
+          as: "alumno",
+          attributes: ["nombre"],
+        },
+      ],
+      raw: true,
+    });
+
+    // Promedio por materia
+    const porMateria = await calificaciones.findAll({
+      attributes: [
+        "materia_id",
+        [sequelize.fn("AVG", sequelize.col("nota")), "promedio"],
+      ],
+      where: { deleted_at: null },
+      group: ["materia_id"],
+      include: [
+        {
+          model: materias,
+          as: "materium",
+          attributes: ["nombre"],
+        },
+      ],
+      raw: true,
+    });
+
+    res.json({
+      mensaje: "Promedios globales",
+      datos: {
+        promedio_general: Number(general?.promedio ?? 0),
+        promedios_por_alumno: porAlumno.map((p) => ({
+          alumno_id: p.alumno_id,
+          alumno_nombre: p["alumno.nombre"] || null,
+          promedio: Number(p.promedio),
+        })),
+        promedios_por_materia: porMateria.map((p) => ({
+          materia_id: p.materia_id,
+          materia_nombre: p["materium.nombre"] || null,
+          promedio: Number(p.promedio),
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("Error obtenerPromedios:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error al obtener promedios", error: error.message });
   }
 };
 
@@ -31,7 +129,8 @@ exports.eliminarCalificacion = async (req, res) => {
     if (!calificacion)
       return res.status(404).json({ mensaje: "Calificación no encontrada" });
 
-    await calificacion.update({ deleted_at: new Date() });
+    // Usamos destroy con paranoid para marcar deleted_at y ocultarla del listado
+    await calificacion.destroy();
     res.json({ mensaje: "Calificación eliminada", datos: calificacion });
   } catch (error) {
     res.status(500).json({
@@ -134,12 +233,9 @@ exports.crearUsuario = async (req, res) => {
         }
 
         if (!matriculaFinal) {
-          return res
-            .status(500)
-            .json({
-              mensaje:
-                "No se pudo generar una matrícula única, intenta de nuevo",
-            });
+          return res.status(500).json({
+            mensaje: "No se pudo generar una matrícula única, intenta de nuevo",
+          });
         }
       }
 

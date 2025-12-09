@@ -2,19 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAutenticacion } from "../../hooks/useAutenticacion";
 import { Botón } from "../../components/common/Botón";
-
-interface UsuarioRegistrado {
-  id: number;
-  nombre: string;
-  email: string;
-  rol: string;
-  fechaRegistro: string;
-}
+import api from "../../services/api";
 
 export function ControlEscolarDashboard() {
   const navigate = useNavigate();
   const { usuario, cerrarSesion } = useAutenticacion();
-  const [usuarios, setUsuarios] = useState<UsuarioRegistrado[]>([]);
   const [vistaActual, setVistaActual] = useState<
     "dashboard" | "alumnos" | "reportes" | "crear" | "asignar"
   >("dashboard");
@@ -49,6 +41,109 @@ export function ControlEscolarDashboard() {
   const [selectedMateriaNombre, setSelectedMateriaNombre] = useState("");
   const [mensajeAccion, setMensajeAccion] = useState("");
   const [estaCargandoAccion, setEstaCargandoAccion] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [statsPromedios, setStatsPromedios] = useState<{
+    promedio_general: number;
+    promedios_por_alumno: Array<{
+      alumno_id: number;
+      alumno_nombre: string | null;
+      promedio: number;
+    }>;
+    promedios_por_materia: Array<{
+      materia_id: number;
+      materia_nombre: string | null;
+      promedio: number;
+    }>;
+  }>({
+    promedio_general: 0,
+    promedios_por_alumno: [],
+    promedios_por_materia: [],
+  });
+  const [cargandoReportes, setCargandoReportes] = useState(false);
+  const [calificacionesList, setCalificacionesList] = useState<
+    Array<{
+      id: number;
+      alumno_nombre: string | null;
+      alumno_matricula?: string | null;
+      grupo: string | null;
+      materia_nombre: string | null;
+      nota: number | null;
+      observaciones: string | null;
+    }>
+  >([]);
+  const [editableMap, setEditableMap] = useState<Record<number, boolean>>({});
+  const [originalCalificaciones, setOriginalCalificaciones] = useState<
+    Record<string, any>
+  >({});
+
+  useEffect(() => {
+    if (vistaActual === "alumnos") {
+      cargarCalificaciones();
+    }
+    if (vistaActual === "reportes") {
+      cargarPromedios();
+    }
+  }, [vistaActual]);
+
+  const cargarPromedios = async () => {
+    try {
+      setCargandoReportes(true);
+      const resp = await api.get("/controlescolar/reporte-promedios");
+      const datos = resp.data?.datos;
+      setStatsPromedios({
+        promedio_general: Number(datos?.promedio_general ?? 0),
+        promedios_por_alumno: datos?.promedios_por_alumno || [],
+        promedios_por_materia: datos?.promedios_por_materia || [],
+      });
+    } catch (err) {
+      console.error("Error cargando promedios", err);
+      setStatsPromedios({
+        promedio_general: 0,
+        promedios_por_alumno: [],
+        promedios_por_materia: [],
+      });
+    } finally {
+      setCargandoReportes(false);
+    }
+  };
+
+  const cargarCalificaciones = async () => {
+    try {
+      setCargando(true);
+      const resp = await api.get("/controlescolar/reporte");
+      const datos = resp.data?.datos || [];
+
+      const listaNormalizada = datos.map((d: any) => ({
+        id: d.id,
+        alumno_nombre: d.alumno_nombre || null,
+        alumno_matricula: d.alumno_matricula || null,
+        grupo: d.grupo || null,
+        materia_nombre: d.materia_nombre || null,
+        nota: d.nota !== undefined && d.nota !== null ? Number(d.nota) : null,
+        observaciones: d.observaciones || null,
+      }));
+
+      setCalificacionesList(listaNormalizada);
+
+      const snap: Record<string, any> = {};
+      const editMap: Record<number, boolean> = {};
+      listaNormalizada.forEach((item: any) => {
+        snap[String(item.id)] = { ...item };
+        editMap[item.id] = false;
+      });
+
+      setOriginalCalificaciones(snap);
+      setEditableMap(editMap);
+    } catch (error) {
+      console.error("Error cargando calificaciones:", error);
+      setCalificacionesList([]);
+      setEditableMap({});
+      setOriginalCalificaciones({});
+    } finally {
+      setCargando(false);
+    }
+  };
 
   const cargarMaestros = async () => {
     try {
@@ -79,15 +174,6 @@ export function ControlEscolarDashboard() {
       setMateriasList([]);
     }
   };
-
-  // Usamos lista estática `GRUPOS` en lugar de llamar al endpoint `/grupos`
-
-  useEffect(() => {
-    const usuariosGuardados = JSON.parse(
-      localStorage.getItem("usuarios") || "[]"
-    );
-    setUsuarios(usuariosGuardados);
-  }, []);
 
   const manejarCerrarSesion = () => {
     cerrarSesion();
@@ -123,8 +209,19 @@ export function ControlEscolarDashboard() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12 max-w-3xl mx-auto justify-items-center">
-              <div className="w-full md:w-[320px] bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer">
+              {/* <div className="w-full md:w-[320px] bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer">
                 <h3 className="text-xl font-bold text-blue-600 mb-3">
+                  Gestión de Calificaciones
+                </h3>
+                <p className="text-gray-600">
+                  Elimina o modifica calificaciones
+                </p>
+              </div> */}
+              <div
+                onClick={() => setVistaActual("alumnos")}
+                className="w-full md:w-[320px] bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer"
+              >
+                <h3 className="text-xl font-bold text-purple-600 mb-3">
                   Gestión de Calificaciones
                 </h3>
                 <p className="text-gray-600">
@@ -173,10 +270,10 @@ export function ControlEscolarDashboard() {
         )}
 
         {vistaActual === "alumnos" && (
-          <div>
+          <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
-                Gestión de Usuarios
+                Editar Calificaciones
               </h2>
               <Botón
                 variante="secondary"
@@ -185,100 +282,225 @@ export function ControlEscolarDashboard() {
                 Volver al inicio
               </Botón>
             </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-blue-600 font-semibold">
-                    Total Usuarios
-                  </p>
-                  <p className="text-3xl font-bold text-blue-900">
-                    {usuarios.length}
-                  </p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-green-600 font-semibold">
-                    Maestros
-                  </p>
-                  <p className="text-3xl font-bold text-green-900">
-                    {usuarios.filter((u) => u.rol === "maestro").length}
-                  </p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <p className="text-sm text-purple-600 font-semibold">
-                    Control Escolar
-                  </p>
-                  <p className="text-3xl font-bold text-purple-900">
-                    {usuarios.filter((u) => u.rol === "control_escolar").length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nombre
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rol
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fecha Registro
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {usuarios.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow-md">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="px-6 py-4 text-center text-gray-500"
-                      >
-                        No hay usuarios registrados
-                      </td>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Alumno
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Grupo
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Materia
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Calificación
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Observaciones
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
-                  ) : (
-                    usuarios.map((usr) => (
-                      <tr key={usr.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {usr.id}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {usr.nombre}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {usr.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              usr.rol === "maestro"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {usr.rol === "maestro"
-                              ? "Maestro"
-                              : "Control Escolar"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(usr.fechaRegistro).toLocaleDateString()}
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {cargando ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-4 text-center text-gray-500"
+                        >
+                          Cargando calificaciones...
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : calificacionesList.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-4 text-center text-gray-500"
+                        >
+                          No hay calificaciones registradas
+                        </td>
+                      </tr>
+                    ) : (
+                      calificacionesList.map((c) => (
+                        <tr key={c.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {c.alumno_nombre}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {c.grupo || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {c.materia_nombre || "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <input
+                              type="number"
+                              min="0"
+                              max="10"
+                              step="0.1"
+                              disabled={!editableMap[c.id]}
+                              value={c.nota !== null ? String(c.nota) : ""}
+                              onChange={(e) => {
+                                const val =
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value);
+                                setCalificacionesList((s) =>
+                                  s.map((item) =>
+                                    item.id === c.id
+                                      ? { ...item, nota: val }
+                                      : item
+                                  )
+                                );
+                              }}
+                              className={`border border-gray-300 rounded px-3 py-1 w-20 focus:outline-none ${editableMap[c.id] ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-100"}`}
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <input
+                              type="text"
+                              disabled={!editableMap[c.id]}
+                              value={c.observaciones ?? ""}
+                              onChange={(e) =>
+                                setCalificacionesList((s) =>
+                                  s.map((item) =>
+                                    item.id === c.id
+                                      ? {
+                                          ...item,
+                                          observaciones: e.target.value,
+                                        }
+                                      : item
+                                  )
+                                )
+                              }
+                              className={`border border-gray-300 rounded px-3 py-1 w-full focus:outline-none ${
+                                editableMap[c.id]
+                                  ? "focus:ring-2 focus:ring-blue-500"
+                                  : "bg-gray-100"
+                              }`}
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {!editableMap[c.id] ? (
+                              <div className="flex items-center space-x-2">
+                                <Botón
+                                  variante="primary"
+                                  onClick={() =>
+                                    setEditableMap((m) => ({
+                                      ...m,
+                                      [c.id]: true,
+                                    }))
+                                  }
+                                >
+                                  Modificar
+                                </Botón>
+                                <Botón
+                                  variante="danger"
+                                  disabled={guardando}
+                                  onClick={async () => {
+                                    const confirmar = window.confirm(
+                                      "¿Deseas eliminar esta calificación?"
+                                    );
+                                    if (!confirmar) return;
+                                    try {
+                                      setGuardando(true);
+                                      await api.delete(
+                                        `/controlescolar/calificaciones/${c.id}`
+                                      );
+                                      setCalificacionesList((s) =>
+                                        s.filter((item) => item.id !== c.id)
+                                      );
+                                      alert("Calificación eliminada");
+                                    } catch (err) {
+                                      console.error(
+                                        "Error eliminando calificación:",
+                                        err
+                                      );
+                                      alert("Error al eliminar calificación");
+                                    } finally {
+                                      setGuardando(false);
+                                    }
+                                  }}
+                                >
+                                  Eliminar
+                                </Botón>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <Botón
+                                  variante="primary"
+                                  disabled={guardando}
+                                  onClick={async () => {
+                                    try {
+                                      setGuardando(true);
+                                      await api.patch(
+                                        `/controlescolar/calificaciones/${c.id}`,
+                                        {
+                                          nota: c.nota,
+                                          observaciones: c.observaciones,
+                                        }
+                                      );
+                                      // actualizar snapshot
+                                      setOriginalCalificaciones((orig) => ({
+                                        ...orig,
+                                        [String(c.id)]: { ...c },
+                                      }));
+                                      setEditableMap((m) => ({
+                                        ...m,
+                                        [c.id]: false,
+                                      }));
+                                      alert("Calificación actualizada");
+                                    } catch (err) {
+                                      console.error(
+                                        "Error actualizando calificación:",
+                                        err
+                                      );
+                                      alert("Error al actualizar calificación");
+                                    } finally {
+                                      setGuardando(false);
+                                    }
+                                  }}
+                                >
+                                  Guardar
+                                </Botón>
+
+                                <Botón
+                                  variante="secondary"
+                                  disabled={guardando}
+                                  onClick={() => {
+                                    // revertir cambios desde snapshot
+                                    const orig =
+                                      originalCalificaciones[String(c.id)];
+                                    if (orig) {
+                                      setCalificacionesList((s) =>
+                                        s.map((item) =>
+                                          item.id === c.id ? { ...orig } : item
+                                        )
+                                      );
+                                    }
+                                    setEditableMap((m) => ({
+                                      ...m,
+                                      [c.id]: false,
+                                    }));
+                                  }}
+                                >
+                                  Cancelar
+                                </Botón>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -373,6 +595,7 @@ export function ControlEscolarDashboard() {
               <div className="flex items-center space-x-4">
                 <Botón
                   variante="primary"
+                  estaCargando={estaCargandoAccion}
                   onClick={async () => {
                     setEstaCargandoAccion(true);
                     setMensajeAccion("");
@@ -391,25 +614,6 @@ export function ControlEscolarDashboard() {
                         payload
                       );
                       setMensajeAccion(resp.data.mensaje || "Usuario creado");
-                      // actualizar lista local
-                      const stored = JSON.parse(
-                        localStorage.getItem("usuarios") || "[]"
-                      );
-                      const nuevoStored = [
-                        {
-                          id: resp.data.datos.id,
-                          nombre: resp.data.datos.nombre,
-                          email: resp.data.datos.email || "",
-                          rol: tipoCrear,
-                        },
-                        ...stored,
-                      ];
-                      localStorage.setItem(
-                        "usuarios",
-                        JSON.stringify(nuevoStored)
-                      );
-                      // Actualizar estado para que la tabla se refresque inmediatamente
-                      setUsuarios(nuevoStored);
                     } catch (err: any) {
                       console.error("Error crear usuario", err);
                       console.error(
@@ -524,6 +728,7 @@ export function ControlEscolarDashboard() {
               <div className="flex items-center space-x-4">
                 <Botón
                   variante="primary"
+                  estaCargando={estaCargandoAccion}
                   onClick={async () => {
                     setEstaCargandoAccion(true);
                     setMensajeAccion("");
@@ -601,21 +806,93 @@ export function ControlEscolarDashboard() {
                 Volver al inicio
               </Botón>
             </div>
+
             <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="text-center py-12">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  Estadísticas del Sistema
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg">
-                    <p className="text-sm opacity-90">Usuarios Totales</p>
-                    <p className="text-4xl font-bold mt-2">{usuarios.length}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg">
-                    <p className="text-sm opacity-90">Usuarios Activos Hoy</p>
-                    <p className="text-4xl font-bold mt-2">1</p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gradient-to-br from-grey-500 to-grey-600 text-white p-6 rounded-lg">
+                  <p className="text-sm opacity-90">Promedio General</p>
+                  <p className="text-4xl font-bold mt-2">
+                    {cargandoReportes
+                      ? "..."
+                      : statsPromedios.promedio_general.toFixed(2)}
+                  </p>
                 </div>
+              </div>
+
+              <div className="mt-10">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Promedio por Alumno
+                </h3>
+                {cargandoReportes ? (
+                  <p className="text-gray-500">Cargando...</p>
+                ) : statsPromedios.promedios_por_alumno.length === 0 ? (
+                  <p className="text-gray-500">Sin datos</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Alumno
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Promedio
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {statsPromedios.promedios_por_alumno.map((a) => (
+                          <tr key={a.alumno_id}>
+                            <td className="px-4 py-2 text-sm text-gray-800">
+                              {a.alumno_nombre || "Sin nombre"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-800">
+                              {a.promedio.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-10">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Promedio por Materia
+                </h3>
+                {cargandoReportes ? (
+                  <p className="text-gray-500">Cargando...</p>
+                ) : statsPromedios.promedios_por_materia.length === 0 ? (
+                  <p className="text-gray-500">Sin datos</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Materia
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Promedio
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {statsPromedios.promedios_por_materia.map((m) => (
+                          <tr key={m.materia_id}>
+                            <td className="px-4 py-2 text-sm text-gray-800">
+                              {m.materia_nombre || "Sin nombre"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-800">
+                              {m.promedio.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           </div>

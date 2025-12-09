@@ -73,27 +73,72 @@ exports.crearCalificacion = async (req, res) => {
       return res.status(404).json({ mensaje: "Alumno no encontrado" });
     }
 
-    // Validar que exista la materia
-    const materiaExiste = await materias.findByPk(materia_id);
-    if (!materiaExiste) {
-      return res.status(404).json({ mensaje: "Materia no encontrada" });
+    // Validar que exista la materia (si se proporciona)
+    if (materia_id) {
+      const materiaExiste = await materias.findByPk(materia_id);
+      if (!materiaExiste) {
+        return res.status(404).json({ mensaje: "Materia no encontrada" });
+      }
     }
 
-    // Crear calificación
-    const nuevaCalificacion = await calificaciones.create({
-      alumno_id,
-      materia_id,
-      maestro_id,
-      nota,
-      observaciones,
-      fecha_registro: new Date(),
-    });
+    // Validar que nota sea un número válido
+    if (nota === undefined || nota === null) {
+      return res.status(400).json({ mensaje: "La nota es requerida" });
+    }
+
+    // Buscar si ya existe una calificación para este alumno, materia y maestro
+    // Primero buscamos incluido soft-deleted (paranoid: false) para poder restaurar si fue eliminado
+    let calificacionExistente;
+    if (materia_id) {
+      calificacionExistente = await calificaciones.findOne({
+        where: {
+          alumno_id,
+          materia_id,
+          maestro_id,
+        },
+        paranoid: false, // Incluir registros eliminados
+      });
+    } else {
+      // Si materia_id es null, buscar explícitamente
+      calificacionExistente = await calificaciones.findOne({
+        where: {
+          alumno_id,
+          materia_id: null,
+          maestro_id,
+        },
+        paranoid: false, // Incluir registros eliminados
+      });
+    }
+
+    let resultado;
+    if (calificacionExistente) {
+      // Si la calificación fue eliminada (soft-delete), restaurarla primero
+      if (calificacionExistente.deletedAt) {
+        await calificacionExistente.restore();
+      }
+      // Actualizar calificación existente
+      resultado = await calificacionExistente.update({
+        nota: Number(nota),
+        observaciones: observaciones || null,
+      });
+    } else {
+      // Crear nueva calificación
+      resultado = await calificaciones.create({
+        alumno_id,
+        materia_id: materia_id || null,
+        maestro_id,
+        nota: Number(nota),
+        observaciones: observaciones || null,
+        fecha_registro: new Date(),
+      });
+    }
 
     res.status(201).json({
       mensaje: "Calificación registrada",
-      datos: nuevaCalificacion,
+      datos: resultado,
     });
   } catch (error) {
+    console.error("Error en crearCalificacion:", error);
     res
       .status(500)
       .json({ mensaje: "Error al crear calificación", error: error.message });
@@ -142,12 +187,10 @@ exports.obtenerCalificaciones = async (req, res) => {
     res.json({ mensaje: "Calificaciones maestro", datos });
   } catch (error) {
     console.error("Error obtenerCalificaciones:", error);
-    res
-      .status(500)
-      .json({
-        mensaje: "Error al obtener calificaciones",
-        error: error.message,
-      });
+    res.status(500).json({
+      mensaje: "Error al obtener calificaciones",
+      error: error.message,
+    });
   }
 };
 

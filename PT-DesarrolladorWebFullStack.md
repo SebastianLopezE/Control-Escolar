@@ -469,7 +469,7 @@ Antes de entregar, revisa:
 - [x] El proyecto tiene la estructura `/backend`, `/frontend` y `docker-compose.yml`.
 - [x] El Back-end implementa MVC (modelos, controladores y rutas separados).
 - [x] El Front-end consume la API usando Axios con JWT.
-- [ ] Todas las rutas protegidas usan middleware de autenticación JWT.
+- [x] Todas las rutas protegidas usan middleware de autenticación JWT.
 - [ ] Existen migraciones y seeders configurados y probados.
 - [ ] El sistema levanta correctamente con `docker-compose up`.
 - [ ] Incluiste la colección de Postman o Apidog.

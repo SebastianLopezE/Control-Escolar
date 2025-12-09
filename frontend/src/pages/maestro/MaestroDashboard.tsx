@@ -33,6 +33,7 @@ export function MaestroDashboard() {
   const [observaciones, setObservaciones] = useState<Record<number, string>>(
     {}
   );
+  const [alumnoEnEdicion, setAlumnoEnEdicion] = useState<number | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [vistaActual, setVistaActual] = useState<
     "dashboard" | "alumnos" | "calificaciones" | "editarCalificaciones"
@@ -387,81 +388,195 @@ export function MaestroDashboard() {
                     {/* Ejemplo de datos estáticos (puedes mapear tu array de alumnos aquí) */}
                     {alumnos
                       .filter((a) => (a.curso_id || null) === selectedCursoId)
-                      .map((alumno) => (
-                        <tr key={alumno.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {alumno.nombre}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {alumno.matricula}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <input
-                              type="number"
-                              min="0"
-                              max="10"
-                              value={notas[alumno.id] ?? ""}
-                              onChange={(e) =>
-                                setNotas((s) => ({
-                                  ...s,
-                                  [alumno.id]: e.target.value,
-                                }))
-                              }
-                              className="border border-gray-300 rounded px-3 py-1 w-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="0.0"
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <input
-                              type="text"
-                              value={observaciones[alumno.id] ?? ""}
-                              onChange={(e) =>
-                                setObservaciones((s) => ({
-                                  ...s,
-                                  [alumno.id]: e.target.value,
-                                }))
-                              }
-                              className="border border-gray-300 rounded px-3 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Observaciones (opcional)"
-                            />
-                          </td>
-                        </tr>
-                      ))}
+                      .map((alumno) => {
+                        const hayAlumnoEnEdicion =
+                          alumnoEnEdicion !== null &&
+                          alumnoEnEdicion !== alumno.id;
+                        const inputDeshabilitado = hayAlumnoEnEdicion;
+
+                        return (
+                          <tr
+                            key={alumno.id}
+                            className={
+                              inputDeshabilitado ? "opacity-50" : "opacity-100"
+                            }
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {alumno.nombre}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {alumno.matricula}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <input
+                                type="number"
+                                min="0"
+                                max="10"
+                                disabled={inputDeshabilitado}
+                                value={notas[alumno.id] ?? ""}
+                                onFocus={() =>
+                                  !inputDeshabilitado &&
+                                  setAlumnoEnEdicion(alumno.id)
+                                }
+                                onChange={(e) =>
+                                  !inputDeshabilitado &&
+                                  setNotas((s) => ({
+                                    ...s,
+                                    [alumno.id]: e.target.value,
+                                  }))
+                                }
+                                className={`border border-gray-300 rounded px-3 py-1 w-20 focus:outline-none ${
+                                  inputDeshabilitado
+                                    ? "bg-gray-100 cursor-not-allowed"
+                                    : "focus:ring-2 focus:ring-blue-500"
+                                }`}
+                                placeholder="0.0"
+                              />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <input
+                                type="text"
+                                disabled={inputDeshabilitado}
+                                value={observaciones[alumno.id] ?? ""}
+                                onFocus={() =>
+                                  !inputDeshabilitado &&
+                                  setAlumnoEnEdicion(alumno.id)
+                                }
+                                onChange={(e) =>
+                                  !inputDeshabilitado &&
+                                  setObservaciones((s) => ({
+                                    ...s,
+                                    [alumno.id]: e.target.value,
+                                  }))
+                                }
+                                className={`border border-gray-300 rounded px-3 py-1 w-full focus:outline-none ${
+                                  inputDeshabilitado
+                                    ? "bg-gray-100 cursor-not-allowed"
+                                    : "focus:ring-2 focus:ring-blue-500"
+                                }`}
+                                placeholder="Observaciones (opcional)"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
 
               {/* Botón de Guardar al final */}
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-end gap-2">
                 <Botón
                   variante="primary"
+                  estaCargando={guardando}
+                  disabled={guardando}
                   onClick={async () => {
-                    // Enviar calificaciones para los alumnos filtrados
                     try {
                       setGuardando(true);
                       const alumnosAEnviar = alumnos.filter(
                         (a) => (a.curso_id || null) === selectedCursoId
                       );
-                      for (const alumno of alumnosAEnviar) {
-                        const nota = notas[alumno.id];
-                        if (nota === undefined || nota === "") continue; // omitir si vacío
-                        await api.post("/maestro/calificaciones", {
+
+                      if (alumnosAEnviar.length === 0) {
+                        alert("No hay alumnos en este curso");
+                        return;
+                      }
+
+                      if (
+                        !alumnosAEnviar[0].materia_id ||
+                        alumnosAEnviar[0].materia_id === null
+                      ) {
+                        alert("Error: No se encontró la materia del curso");
+                        return;
+                      }
+
+                      // Recolectar todas las calificaciones a guardar
+                      const calificacionesAGuardar = alumnosAEnviar
+                        .filter((alumno) => {
+                          const nota = notas[alumno.id];
+                          return nota !== undefined && nota !== "";
+                        })
+                        .map((alumno) => ({
                           alumno_id: alumno.id,
                           materia_id: alumno.materia_id,
-                          nota: Number(nota),
+                          nota: Number(notas[alumno.id]),
                           observaciones: observaciones[alumno.id] || null,
-                        });
+                        }));
+
+                      if (calificacionesAGuardar.length === 0) {
+                        alert("No se ingresó ninguna calificación");
+                        return;
                       }
-                      alert("Calificaciones guardadas");
+
+                      // Guardar todas las calificaciones secuencialmente (una por una)
+                      const resultados = [];
+                      for (const cal of calificacionesAGuardar) {
+                        try {
+                          const response = await api.post(
+                            "/maestro/calificaciones",
+                            cal
+                          );
+                          resultados.push({
+                            status: "fulfilled",
+                            value: response,
+                          });
+                        } catch (err) {
+                          resultados.push({
+                            status: "rejected",
+                            reason: err,
+                          });
+                        }
+                      }
+
+                      // Contar éxitos y errores
+                      const exitosas = resultados.filter(
+                        (r) => r.status === "fulfilled"
+                      ).length;
+                      const errores = resultados.filter(
+                        (r) => r.status === "rejected"
+                      );
+
+                      if (errores.length > 0) {
+                        console.error(
+                          "Errores al guardar calificaciones:",
+                          errores
+                        );
+                        alert(
+                          `${exitosas} calificación(es) guardada(s) correctamente.\n${errores.length} error(es) durante el guardado. Revisa la consola para detalles.`
+                        );
+                      } else {
+                        alert(
+                          `¡Éxito! ${exitosas} calificación(es) guardada(s) correctamente.`
+                        );
+                      }
+
+                      // Limpiar notas y observaciones solo si todo fue exitoso
+                      if (errores.length === 0) {
+                        setNotas({});
+                        setObservaciones({});
+                        setAlumnoEnEdicion(null);
+                      }
                     } catch (err) {
                       console.error("Error guardando calificaciones:", err);
-                      alert("Error al guardar calificaciones");
+                      alert(
+                        "Error al guardar calificaciones. Revisa la consola para más detalles."
+                      );
                     } finally {
                       setGuardando(false);
                     }
                   }}
                 >
-                  {guardando ? "Guardando..." : "Guardar Cambios"}
+                  {guardando ? "Guardando..." : "Guardar"}
+                </Botón>
+                <Botón
+                  variante="secondary"
+                  disabled={guardando}
+                  onClick={() => {
+                    setNotas({});
+                    setObservaciones({});
+                  }}
+                >
+                  Limpiar Todo
                 </Botón>
               </div>
             </div>

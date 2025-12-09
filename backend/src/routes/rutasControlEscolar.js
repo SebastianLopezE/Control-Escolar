@@ -14,6 +14,14 @@ router.get(
   controlEscolarController.obtenerReporte
 );
 
+// Promedios globales
+router.get(
+  "/reporte-promedios",
+  verificarToken,
+  verificarRol(["control_escolar"]),
+  controlEscolarController.obtenerPromedios
+);
+
 // Ruta para eliminar calificación (soft delete)
 router.delete(
   "/calificaciones/:id",
