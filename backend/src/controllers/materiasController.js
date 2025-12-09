@@ -1,7 +1,7 @@
 const { models } = require("../models");
 const { materias } = models;
 
-// Listar materias disponibles
+// Listar materias
 exports.listar = async (_req, res) => {
   try {
     const lista = await materias.findAll({

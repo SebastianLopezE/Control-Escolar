@@ -161,7 +161,7 @@ exports.editarCalificacion = async (req, res) => {
 // Crear usuario (maestro o alumno) - solo control_escolar
 exports.crearUsuario = async (req, res) => {
   try {
-    const { tipo } = req.body; // 'maestro' | 'alumno'
+    const { tipo } = req.body;
 
     if (tipo === "maestro") {
       const { nombre, email, password } = req.body;
@@ -204,7 +204,7 @@ exports.crearUsuario = async (req, res) => {
         grupoId = grupo.id;
       }
 
-      // Preparar matrícula: usar la proporcionada o generar una aleatoria de 6 dígitos
+      // Matrícula: usar la proporcionada o generar una única
       let matriculaFinal =
         matricula && String(matricula).trim() !== ""
           ? String(matricula).trim()
@@ -219,12 +219,11 @@ exports.crearUsuario = async (req, res) => {
             .status(400)
             .json({ mensaje: "La matrícula ya está registrada" });
       } else {
-        // Intentar generar una matrícula única (6 dígitos). Limitar intentos para evitar loops infinitos.
+        // Generar matrícula única de 6 dígitos
         let intentos = 0;
         while (!matriculaFinal && intentos < 50) {
           const candidato = String(Math.floor(100000 + Math.random() * 900000));
           // comprobar existencia
-          // eslint-disable-next-line no-await-in-loop
           const existe = await alumnos.findOne({
             where: { matricula: candidato },
           });

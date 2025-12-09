@@ -34,14 +34,8 @@ app.use("/api/auth", rutasAutenticacion);
 
 // Rutas protegidas de maestro
 app.use("/api/maestro", rutasMaestro);
-
-// Rutas protegidas de control escolar
 app.use("/api/controlescolar", rutasControlEscolar);
-
-// Rutas públicas de materias
 app.use("/api/materias", rutasMaterias);
-
-// Rutas públicas de grupos
 app.use("/api/grupos", rutasGrupos);
 
 async function main() {

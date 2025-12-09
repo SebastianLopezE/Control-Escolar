@@ -46,7 +46,6 @@ exports.obtenerAlumnos = async (req, res) => {
         nombre: alumno.nombre,
         matricula: alumno.matricula || "Sin matrícula",
         grupo: alumno.grupo?.nombre || "Sin grupo",
-        // Aquí extraemos la materia del curso encontrado
         materia:
           cursoCorrespondiente?.materium?.nombre || "Sin materia asignada",
         materia_id: cursoCorrespondiente?.materium?.id || null,
@@ -73,7 +72,7 @@ exports.crearCalificacion = async (req, res) => {
       return res.status(404).json({ mensaje: "Alumno no encontrado" });
     }
 
-    // Validar que exista la materia (si se proporciona)
+    // Validar que exista la materia
     if (materia_id) {
       const materiaExiste = await materias.findByPk(materia_id);
       if (!materiaExiste) {
@@ -87,7 +86,7 @@ exports.crearCalificacion = async (req, res) => {
     }
 
     // Buscar si ya existe una calificación para este alumno, materia y maestro
-    // Primero buscamos incluido soft-deleted (paranoid: false) para poder restaurar si fue eliminado
+    // Primero buscamos incluido soft-deleted para poder restaurar si fue eliminado
     let calificacionExistente;
     if (materia_id) {
       calificacionExistente = await calificaciones.findOne({
@@ -99,7 +98,7 @@ exports.crearCalificacion = async (req, res) => {
         paranoid: false, // Incluir registros eliminados
       });
     } else {
-      // Si materia_id es null, buscar explícitamente
+      // Si materia_id es null, buscar calificación sin materia
       calificacionExistente = await calificaciones.findOne({
         where: {
           alumno_id,
@@ -170,7 +169,7 @@ exports.obtenerCalificaciones = async (req, res) => {
       order: [["fecha_registro", "DESC"]],
     });
 
-    // Formatear resultado para frontend
+    // mapear datos para respuesta JSON
     const datos = lista.map((c) => ({
       id: c.id,
       alumno_id: c.alumno_id,

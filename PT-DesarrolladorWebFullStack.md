@@ -470,10 +470,10 @@ Antes de entregar, revisa:
 - [x] El Back-end implementa MVC (modelos, controladores y rutas separados).
 - [x] El Front-end consume la API usando Axios con JWT.
 - [x] Todas las rutas protegidas usan middleware de autenticación JWT.
-- [ ] Existen migraciones y seeders configurados y probados.
-- [ ] El sistema levanta correctamente con `docker-compose up`.
-- [ ] Incluiste la colección de Postman o Apidog.
-- [ ] El README.md explica paso a paso cómo ejecutar todo.
+- [x] Existen migraciones y seeders configurados y probados.
+- [x] El sistema levanta correctamente con `docker-compose up`.
+- [x] Incluiste la colección de Postman o Apidog.
+- [x] El README.md explica paso a paso cómo ejecutar todo.
 
 ---
 

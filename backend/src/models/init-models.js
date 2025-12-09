@@ -1,4 +1,5 @@
 var DataTypes = require("sequelize").DataTypes;
+var _SequelizeMeta = require("./SequelizeMeta");
 var _alumnos = require("./alumnos");
 var _calificaciones = require("./calificaciones");
 var _cursos = require("./cursos");
@@ -7,6 +8,7 @@ var _materias = require("./materias");
 var _usuarios = require("./usuarios");
 
 function initModels(sequelize) {
+  var SequelizeMeta = _SequelizeMeta(sequelize, DataTypes);
   var alumnos = _alumnos(sequelize, DataTypes);
   var calificaciones = _calificaciones(sequelize, DataTypes);
   var cursos = _cursos(sequelize, DataTypes);
@@ -30,6 +32,7 @@ function initModels(sequelize) {
   usuarios.hasMany(cursos, { as: "cursos", foreignKey: "maestro_id"});
 
   return {
+    SequelizeMeta,
     alumnos,
     calificaciones,
     cursos,
