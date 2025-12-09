@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+	postgres:
+		image: postgres:15-alpine
+		container_name: control_escolar_db
+		restart: unless-stopped
+		environment:
+			POSTGRES_DB: control_escolar
+			POSTGRES_USER: sysprueba
+			POSTGRES_PASSWORD: 123456
+		ports:
+			- "5432:5432"
+		volumes:
+			- pgdata:/var/lib/postgresql/data
+
+	backend:
+		build: ./backend
+		container_name: control_escolar_api
+		depends_on:
+			- postgres
+		environment:
+			DATABASE_URL: postgres://control_user:control_pass@postgres:5432/control_escolar
+			PORT: 3000
+		ports:
+			- "3000:3000"
+		command: ["npm", "start"]
+
+	frontend:
+		build: ./frontend
+		container_name: control_escolar_frontend
+		depends_on:
+			- backend
+		ports:
+			- "5173:5173"
+		command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+volumes:
+	pgdata:
