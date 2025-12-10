@@ -8,8 +8,9 @@ interface PropsRutaPrivada {
 }
 
 export function RutaPrivada({ children, rolesPermitidos }: PropsRutaPrivada) {
-  const { estaAutenticado, usuario, estaCargando, iniciando } = useAutenticacion();
-
+  const { estaAutenticado, usuario, estaCargando, iniciando } =
+    useAutenticacion();
+  // Muestra pantalla de carga mientras se verifica la autenticación
   if (iniciando || estaCargando) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -20,7 +21,7 @@ export function RutaPrivada({ children, rolesPermitidos }: PropsRutaPrivada) {
       </div>
     );
   }
-
+  // Redirige a la página de inicio de sesión si no está autenticado
   if (!estaAutenticado) {
     return <Navigate to="/iniciar-sesion" replace />;
   }

@@ -6,7 +6,7 @@ export function RedireccionDashboard() {
   const navigate = useNavigate();
   const { usuario } = useAutenticacion();
 
-  // Redirigir según el rol del usuario
+  //5. Redirigir según el rol del usuario
   useEffect(() => {
     if (usuario?.rol === "maestro") {
       navigate("/maestro/dashboard");

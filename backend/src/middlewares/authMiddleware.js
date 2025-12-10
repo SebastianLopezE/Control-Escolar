@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-//Middleware para verificar el token JWT
+//6. Middleware para verificar el token JWT
 //Valida que el usuario esté autenticado antes de acceder a rutas protegidas
 const verificarToken = (req, res, next) => {
   try {
@@ -20,7 +20,7 @@ const verificarToken = (req, res, next) => {
       return res.status(401).json({ error: "Formato de token inválido" });
     }
 
-    const token = partes[1];
+    const token = partes[1]; // Extraer el token
 
     // Verificar y decodificar el token
     const decodificado = jwt.verify(token, process.env.JWT_SECRET);

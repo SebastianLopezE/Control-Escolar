@@ -230,6 +230,7 @@ export function MaestroDashboard() {
             </div>
 
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
+             // tabla de alumnos 
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -269,7 +270,7 @@ export function MaestroDashboard() {
                         No hay alumnos asignados
                       </td>
                     </tr>
-                  ) : (
+                  ) : ( 
                     alumnos.map((alumno) => (
                       <tr key={alumno.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

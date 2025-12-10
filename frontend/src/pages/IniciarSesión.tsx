@@ -11,16 +11,18 @@ export function IniciarSesión() {
   const [contraseña, setContraseña] = useState("");
   const [errorLocal, setErrorLocal] = useState("");
 
-  const manejarEnvio = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // 2. Maneja el envío del formulario de inicio de sesión
+  const manejarEnvio = async (e: FormEvent<HTMLFormElement>) => { 
+    e.preventDefault(); 
     setErrorLocal("");
 
-    if (!email || !contraseña) {
+    if (!email || !contraseña) { 
       setErrorLocal("Por favor completa todos los campos");
       return;
     }
 
     try {
+      // se llama a la funcion de iniciar sesión del contexto (contextAutenticacion)
       await iniciarSesion(email, contraseña);
       navigate("/dashboard");
     } catch (err) {

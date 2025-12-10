@@ -5,7 +5,7 @@ exports.obtenerAlumnos = async (req, res) => {
   try {
     const maestro_id = req.usuario.id;
 
-    // obtener cursos
+    // obtener cursos asignado al maestro
     const asignaciones = await cursos.findAll({
       where: { maestro_id },
       include: [
@@ -59,6 +59,7 @@ exports.obtenerAlumnos = async (req, res) => {
     res.status(500).json({ mensaje: "Error", error: error.message });
   }
 };
+/*---------------------------------------------------------------------------------- */
 
 // Crear calificación
 exports.crearCalificacion = async (req, res) => {
@@ -143,7 +144,7 @@ exports.crearCalificacion = async (req, res) => {
       .json({ mensaje: "Error al crear calificación", error: error.message });
   }
 };
-
+/*---------------------------------------------------------------------------------- */
 // Obtener calificaciones del maestro con detalles (alumno, grupo, materia)
 exports.obtenerCalificaciones = async (req, res) => {
   try {

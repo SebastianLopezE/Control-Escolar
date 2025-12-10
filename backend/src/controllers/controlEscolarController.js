@@ -57,7 +57,6 @@ exports.obtenerPromedios = async (_req, res) => {
     // Promedio general
     const general = await calificaciones.findOne({
       attributes: [[sequelize.fn("AVG", sequelize.col("nota")), "promedio"]],
-      where: { deleted_at: null },
       raw: true,
     });
 
@@ -67,17 +66,27 @@ exports.obtenerPromedios = async (_req, res) => {
         "alumno_id",
         [sequelize.fn("AVG", sequelize.col("nota")), "promedio"],
       ],
-      where: { deleted_at: null },
       group: ["alumno_id"],
-      include: [
-        {
-          model: alumnos,
-          as: "alumno",
-          attributes: ["nombre"],
-        },
-      ],
+      subQuery: false,
+      raw: true,
+      order: [["alumno_id", "ASC"]],
+    });
+
+    // Obtener nombres de alumnos
+    const alumnosMap = await alumnos.findAll({
+      attributes: ["id", "nombre"],
       raw: true,
     });
+
+    const alumnosById = Object.fromEntries(
+      alumnosMap.map((a) => [a.id, a.nombre])
+    );
+
+    const porAlumnoConNombres = porAlumno.map((p) => ({
+      alumno_id: p.alumno_id,
+      alumno_nombre: alumnosById[p.alumno_id] || null,
+      promedio: Number(p.promedio),
+    }));
 
     // Promedio por materia
     const porMateria = await calificaciones.findAll({
@@ -85,32 +94,34 @@ exports.obtenerPromedios = async (_req, res) => {
         "materia_id",
         [sequelize.fn("AVG", sequelize.col("nota")), "promedio"],
       ],
-      where: { deleted_at: null },
       group: ["materia_id"],
-      include: [
-        {
-          model: materias,
-          as: "materium",
-          attributes: ["nombre"],
-        },
-      ],
+      subQuery: false,
+      raw: true,
+      order: [["materia_id", "ASC"]],
+    });
+
+    // Obtener nombres de materias
+    const materiasMap = await materias.findAll({
+      attributes: ["id", "nombre"],
       raw: true,
     });
+
+    const materiasById = Object.fromEntries(
+      materiasMap.map((m) => [m.id, m.nombre])
+    );
+
+    const porMateriaConNombres = porMateria.map((p) => ({
+      materia_id: p.materia_id,
+      materia_nombre: materiasById[p.materia_id] || null,
+      promedio: Number(p.promedio),
+    }));
 
     res.json({
       mensaje: "Promedios globales",
       datos: {
         promedio_general: Number(general?.promedio ?? 0),
-        promedios_por_alumno: porAlumno.map((p) => ({
-          alumno_id: p.alumno_id,
-          alumno_nombre: p["alumno.nombre"] || null,
-          promedio: Number(p.promedio),
-        })),
-        promedios_por_materia: porMateria.map((p) => ({
-          materia_id: p.materia_id,
-          materia_nombre: p["materium.nombre"] || null,
-          promedio: Number(p.promedio),
-        })),
+        promedios_por_alumno: porAlumnoConNombres,
+        promedios_por_materia: porMateriaConNombres,
       },
     });
   } catch (error) {

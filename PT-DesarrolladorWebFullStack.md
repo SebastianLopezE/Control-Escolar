@@ -416,7 +416,7 @@ Todas las rutas deben estar bajo el prefijo común `/api`.
      docker-compose up
      ```
 
-3. 🌱 **Seeders (datos iniciales)**  
+3. 🌱 **Seeders (datos iniciales)**
    Scripts que generen automáticamente:
    - 1 usuario **Admin / Control Escolar**.
    - Al menos 2 usuarios **Maestro**.

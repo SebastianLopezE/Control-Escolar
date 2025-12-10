@@ -50,7 +50,7 @@ module.exports = {
 
       // generar token
       const token = crearToken(nuevoUsuario);
-
+      
       res.status(201).json({
         mensaje: "Usuario creado exitosamente",
         token,
@@ -66,7 +66,7 @@ module.exports = {
     }
   },
 
-  // login
+  // 4. login
   iniciarSesion: async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -91,7 +91,7 @@ module.exports = {
 
       // generar token
       const token = crearToken(usuario);
-
+      
       res.json({
         mensaje: "Bienvenido",
         token,
