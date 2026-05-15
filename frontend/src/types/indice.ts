@@ -1,5 +1,3 @@
-// Tipos globales de la aplicación
-
 export interface Usuario {
   id: number;
   nombre: string;
