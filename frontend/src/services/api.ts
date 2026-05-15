@@ -1,10 +1,9 @@
 import axios from "axios";
-// crea cliente con la direccion de la API
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
 });
 
-// Interceptor para agregar el token JWT a todas las peticiones
+// interceptor para agregar el token JWT a todas las peticiones
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
