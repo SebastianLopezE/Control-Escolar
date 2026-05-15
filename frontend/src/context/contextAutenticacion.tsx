@@ -42,12 +42,12 @@ export const ProveedorAutenticacion: React.FC<PropasProveedorAutenticacion> = ({
     restore();
   }, []);
 
-  // 3. Función para iniciar sesión
+  // funcion para iniciar sesion
   const iniciarSesion = useCallback(async (email: string, password: string) => {
     setEstaCargando(true);
     setError(null);
     try {
-      // Llamada a la API para iniciar sesión
+      // llammamos a la API para iniciar sesion
       const { data } = await api.post("/auth/login", { email, password });
 
       const tokenObtenido = data.token as string;
@@ -57,7 +57,7 @@ export const ProveedorAutenticacion: React.FC<PropasProveedorAutenticacion> = ({
         email: data.usuario.email ?? email,
         rol: data.usuario.rol,
       };
-      // Guardar token y usuario en el estado y en el almacenamiento local
+      // guardar token y usuario en local
       setToken(tokenObtenido);
       setUsuario(usuarioObtenido);
       localStorage.setItem("token", tokenObtenido); // Guardar token 
