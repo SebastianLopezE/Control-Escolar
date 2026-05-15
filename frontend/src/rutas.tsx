@@ -11,8 +11,7 @@ export const router = createBrowserRouter([
     path: "/iniciar-sesion",
     element: <IniciarSesión />,
   },
-  // Ruta de registro público deshabilitada. Mantener el componente en el proyecto
-  // Si alguien intenta acceder redirigimos al login
+
   {
     path: "/registro",
     element: <Navigate to="/iniciar-sesion" replace />,
