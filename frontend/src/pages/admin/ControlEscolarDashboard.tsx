@@ -21,7 +21,7 @@ export function ControlEscolarDashboard() {
   const [materiasList, setMateriasList] = useState<
     { id: number; nombre: string }[]
   >([]);
-  // Lista estática y conocida de grupos (evita dependencias externas si prefieres)
+  // lista de los grupos
   const GRUPOS = [
     "1-A",
     "1-B",
@@ -162,7 +162,6 @@ export function ControlEscolarDashboard() {
       const api = (await import("../../services/api")).default;
       const resp = await api.get("/materias");
       const lista = resp.data?.datos || [];
-      // esperamos que cada materia tenga { id, nombre }
       setMateriasList(
         lista.map((m: any) => ({
           id: m.id,
@@ -446,7 +445,6 @@ export function ControlEscolarDashboard() {
                                           observaciones: c.observaciones,
                                         }
                                       );
-                                      // actualizar snapshot
                                       setOriginalCalificaciones((orig) => ({
                                         ...orig,
                                         [String(c.id)]: { ...c },
@@ -474,7 +472,6 @@ export function ControlEscolarDashboard() {
                                   variante="secondary"
                                   disabled={guardando}
                                   onClick={() => {
-                                    // revertir cambios desde snapshot
                                     const orig =
                                       originalCalificaciones[String(c.id)];
                                     if (orig) {
@@ -606,7 +603,6 @@ export function ControlEscolarDashboard() {
                         payload.email = email;
                         payload.password = password;
                       } else {
-                        // No enviamos matrícula; se generará automáticamente en el backend
                         payload.grupo_nombre = grupoNombre;
                       }
                       const resp = await api.post(
@@ -734,7 +730,6 @@ export function ControlEscolarDashboard() {
                     setMensajeAccion("");
                     try {
                       const api = (await import("../../services/api")).default;
-                      // Resolver ids a partir de nombres seleccionados
                       const maestroEncontrado = maestrosList.find(
                         (m) => m.nombre === selectedMaestroNombre
                       );
