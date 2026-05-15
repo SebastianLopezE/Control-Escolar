@@ -27,7 +27,7 @@ exports.obtenerAlumnos = async (req, res) => {
       mapaCursos.set(curso.grupo_id, curso);
     });
 
-    // obtener ids de grupos
+    // obtener los id de los grupos
     const grupoIds = asignaciones.map((c) => c.grupo_id);
 
     // obtener alumnos
@@ -59,21 +59,20 @@ exports.obtenerAlumnos = async (req, res) => {
     res.status(500).json({ mensaje: "Error", error: error.message });
   }
 };
-/*---------------------------------------------------------------------------------- */
 
-// Crear calificación
+// crear calificación
 exports.crearCalificacion = async (req, res) => {
   try {
     const { alumno_id, materia_id, nota, observaciones } = req.body;
     const maestro_id = req.usuario.id;
 
-    // Validar que exista el alumno
+    // validar que exista el alumno
     const alumnoExiste = await alumnos.findByPk(alumno_id);
     if (!alumnoExiste) {
       return res.status(404).json({ mensaje: "Alumno no encontrado" });
     }
 
-    // Validar que exista la materia
+    // validar que exista la materia
     if (materia_id) {
       const materiaExiste = await materias.findByPk(materia_id);
       if (!materiaExiste) {
@@ -81,13 +80,12 @@ exports.crearCalificacion = async (req, res) => {
       }
     }
 
-    // Validar que nota sea un número válido
+    // validar que nota sea un numero valido
     if (nota === undefined || nota === null) {
       return res.status(400).json({ mensaje: "La nota es requerida" });
     }
 
-    // Buscar si ya existe una calificación para este alumno, materia y maestro
-    // Primero buscamos incluido soft-deleted para poder restaurar si fue eliminado
+    // buscamos si existe ya una calificacion en el alumno, materia y maestro
     let calificacionExistente;
     if (materia_id) {
       calificacionExistente = await calificaciones.findOne({
@@ -96,33 +94,33 @@ exports.crearCalificacion = async (req, res) => {
           materia_id,
           maestro_id,
         },
-        paranoid: false, // Incluir registros eliminados
+        paranoid: false, // incluir registros eliminados
       });
     } else {
-      // Si materia_id es null, buscar calificación sin materia
+      // si materia_id es null, buscar calificacion sin materia
       calificacionExistente = await calificaciones.findOne({
         where: {
           alumno_id,
           materia_id: null,
           maestro_id,
         },
-        paranoid: false, // Incluir registros eliminados
+        paranoid: false, // incluir registros eliminados
       });
     }
 
     let resultado;
     if (calificacionExistente) {
-      // Si la calificación fue eliminada (soft-delete), restaurarla primero
+      // si la calificacion fue eliminada (soft-delete), restaurarla primero
       if (calificacionExistente.deletedAt) {
         await calificacionExistente.restore();
       }
-      // Actualizar calificación existente
+      // actualizar calificacion existente
       resultado = await calificacionExistente.update({
         nota: Number(nota),
         observaciones: observaciones || null,
       });
     } else {
-      // Crear nueva calificación
+      // crear nueva calificación
       resultado = await calificaciones.create({
         alumno_id,
         materia_id: materia_id || null,
@@ -144,8 +142,8 @@ exports.crearCalificacion = async (req, res) => {
       .json({ mensaje: "Error al crear calificación", error: error.message });
   }
 };
-/*---------------------------------------------------------------------------------- */
-// Obtener calificaciones del maestro con detalles (alumno, grupo, materia)
+
+// obtener calificaciones del maestro con (alumno, grupo, materia)
 exports.obtenerCalificaciones = async (req, res) => {
   try {
     const maestro_id = req.usuario.id;
@@ -170,7 +168,7 @@ exports.obtenerCalificaciones = async (req, res) => {
       order: [["fecha_registro", "DESC"]],
     });
 
-    // mapear datos para respuesta JSON
+    // mapear datos para el json
     const datos = lista.map((c) => ({
       id: c.id,
       alumno_id: c.alumno_id,
@@ -194,27 +192,27 @@ exports.obtenerCalificaciones = async (req, res) => {
   }
 };
 
-// Editar calificación
+// editar calificación
 exports.editarCalificacion = async (req, res) => {
   try {
     const { id } = req.params;
     const { nota, observaciones } = req.body;
     const maestro_id = req.usuario.id;
 
-    // Obtener calificación
+    // obtener calificaicon
     const calificacion = await calificaciones.findByPk(id);
     if (!calificacion) {
       return res.status(404).json({ mensaje: "Calificación no encontrada" });
     }
 
-    // Validar que el maestro sea el propietario
+    // validar que el maestro es el que puso la calificacion
     if (calificacion.maestro_id !== maestro_id) {
       return res
         .status(403)
         .json({ mensaje: "No tienes permiso para editar esta calificación" });
     }
 
-    // Actualizar
+    // actualizar
     await calificacion.update({ nota, observaciones });
 
     res.json({ mensaje: "Calificación actualizada", datos: calificacion });
@@ -225,30 +223,30 @@ exports.editarCalificacion = async (req, res) => {
   }
 };
 
-// Asignar curso (materia + grupo) a un maestro
+// asignar curso (materia + grupo) a un maestro
 exports.asignarCurso = async (req, res) => {
   try {
     const { maestro_id, materia_id, grupo_nombre } = req.body;
 
-    // Validar maestro
+    // validar maestro
     const maestro = await usuarios.findByPk(maestro_id);
     if (!maestro || maestro.rol.toLowerCase() !== "maestro") {
       return res.status(400).json({ mensaje: "Maestro inválido" });
     }
 
-    // Validar materia
+    // validar materia
     const materia = await materias.findByPk(materia_id);
     if (!materia) {
       return res.status(400).json({ mensaje: "Materia inválida" });
     }
 
-    // Buscar o crear grupo por nombre
+    // buscar o crear grupo por nombre
     const [grupo, creado] = await grupos.findOrCreate({
       where: { nombre: grupo_nombre },
       defaults: { nombre: grupo_nombre },
     });
 
-    // Crear asignación (única por maestro+materia+grupo)
+    // asignar un curso a un maestro
     const curso = await cursos.create({
       maestro_id,
       materia_id,
