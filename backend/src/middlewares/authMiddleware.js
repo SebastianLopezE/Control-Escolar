@@ -1,11 +1,11 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-//6. Middleware para verificar el token JWT
-//Valida que el usuario esté autenticado antes de acceder a rutas protegidas
+// verifica el token JWT
+//valida que el usuario este autenticado antes de acceder a las rutas
 const verificarToken = (req, res, next) => {
   try {
-    // Obtener el token del header Authorization
+    // obtener el token
     const encabezadoAuth = req.headers.authorization;
 
     if (!encabezadoAuth) {
@@ -14,18 +14,18 @@ const verificarToken = (req, res, next) => {
         .json({ error: "No se proporcionó token de autenticación" });
     }
 
-    // Verificar formato: "Bearer <token>"
+    // validmos que el formato sea bearer
     const partes = encabezadoAuth.split(" ");
     if (partes.length !== 2 || partes[0] !== "Bearer") {
       return res.status(401).json({ error: "Formato de token inválido" });
     }
 
-    const token = partes[1]; // Extraer el token
+    const token = partes[1]; // jalamos el tocken
 
-    // Verificar y decodificar el token
+    // si el tocken es correcto se decodifica
     const decodificado = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Agregar la información del usuario decodificada al request
+    // agregar la info del usuario que se decodifico al request
     req.usuario = {
       id: decodificado.id,
       rol: decodificado.rol,
@@ -44,7 +44,7 @@ const verificarToken = (req, res, next) => {
   }
 };
 
-//Middleware para verificar roles específicos
+//middleware para verificar roles especificos
 const verificarRol = (rolesPermitidos) => {
   return (req, res, next) => {
     if (!req.usuario) {
