@@ -11,7 +11,6 @@ export function IniciarSesión() {
   const [contraseña, setContraseña] = useState("");
   const [errorLocal, setErrorLocal] = useState("");
 
-  // 2. Maneja el envío del formulario de inicio de sesión
   const manejarEnvio = async (e: FormEvent<HTMLFormElement>) => { 
     e.preventDefault(); 
     setErrorLocal("");
