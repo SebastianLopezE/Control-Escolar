@@ -4,14 +4,12 @@ import api from "../services/api";
 import { Botón } from "../components/common/Botón";
 import { Entrada } from "../components/common/Entrada";
 
-// Materias disponibles (fijas) - deben coincidir con los códigos en la BD
 const MATERIAS_DISPONIBLES = [
   { codigo: "matematicas", nombre: "Matemáticas" },
   { codigo: "quimica", nombre: "Química" },
   { codigo: "español", nombre: "Español" },
 ];
 
-// Grupos disponibles (fijos)
 const GRUPOS_DISPONIBLES = [
   "1-A",
   "1-B",
@@ -42,14 +40,11 @@ export function Registro() {
   const [estaCargando, setEstaCargando] = useState(false);
   const [error, setError] = useState("");
 
-  // Cargar materias desde API y filtrar solo las permitidas
   useEffect(() => {
     const obtenerMaterias = async () => {
       try {
         const resp = await api.get("/materias");
         const todasMaterias = resp.data?.datos || [];
-
-        // Filtrar solo las materias permitidas (QIM, ESP)
         const codigosPermitidos = MATERIAS_DISPONIBLES.map((m) => m.codigo);
         const materiasFiltradas = todasMaterias.filter((mat: any) =>
           codigosPermitidos.includes(mat.codigo)
@@ -94,7 +89,6 @@ export function Registro() {
         rol,
       });
 
-      // Si es maestro y seleccionó materia/grupo, crear la asignación de curso
       if (rol === "maestro" && materiaId && grupo) {
         const { token, usuario } = respuestaRegistro.data || {};
         if (token) {
@@ -106,8 +100,6 @@ export function Registro() {
           materia_id: Number(materiaId),
           grupo_nombre: grupo,
         });
-
-        // Limpia el token para que el usuario inicie sesión normalmente
         localStorage.removeItem("token");
       }
 
