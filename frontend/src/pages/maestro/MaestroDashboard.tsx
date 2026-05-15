@@ -72,7 +72,6 @@ export function MaestroDashboard() {
       setCargando(true);
       const resp = await api.get("/maestro/calificaciones");
       const datos = resp.data.datos || [];
-      // normalizar tipos
       const listaNormalizada = datos.map((d: any) => ({
         id: d.id,
         alumno_nombre: d.alumno_nombre || "-",
@@ -84,7 +83,7 @@ export function MaestroDashboard() {
       }));
 
       setCalificacionesList(listaNormalizada);
-      // Guardar snapshot para poder cancelar cambios por fila
+      
       const snap: Record<string, any> = {};
       listaNormalizada.forEach((item: any) => {
         snap[String(item.id)] = { ...item };
@@ -106,7 +105,7 @@ export function MaestroDashboard() {
       const datos = respuesta.data.datos || [];
       setAlumnos(datos);
 
-      // construir lista de cursos únicos a partir de los alumnos (cada alumno tiene curso_id, materia, grupo)
+      // crea la lista de los cursos por alumno
       const mapa = new Map();
       datos.forEach((a: any) => {
         const key = a.curso_id || `${a.materia}_${a.grupo}`;
@@ -121,7 +120,6 @@ export function MaestroDashboard() {
       });
 
       setCursos(Array.from(mapa.values()));
-      // seleccionar el primero por defecto
       const primera = Array.from(mapa.values())[0];
       setSelectedCursoId(primera ? primera.curso_id || null : null);
     } catch (error) {
@@ -360,7 +358,7 @@ export function MaestroDashboard() {
                 </div>
               </div>
 
-              {/* --- SECCIÓN 2: LISTA DE ALUMNOS (Tabla) --- */}
+              {/*LISTA DE ALUMNOS*/}
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -386,7 +384,7 @@ export function MaestroDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Ejemplo de datos estáticos (puedes mapear tu array de alumnos aquí) */}
+                    
                     {alumnos
                       .filter((a) => (a.curso_id || null) === selectedCursoId)
                       .map((alumno) => {
@@ -465,7 +463,7 @@ export function MaestroDashboard() {
                 </table>
               </div>
 
-              {/* Botón de Guardar al final */}
+              {/* boton de guardar */}
               <div className="mt-6 flex justify-end gap-2">
                 <Botón
                   variante="primary"
@@ -491,7 +489,7 @@ export function MaestroDashboard() {
                         return;
                       }
 
-                      // Recolectar todas las calificaciones a guardar
+                      // jalar todas las calificaciones cuando guardemos
                       const calificacionesAGuardar = alumnosAEnviar
                         .filter((alumno) => {
                           const nota = notas[alumno.id];
@@ -509,7 +507,7 @@ export function MaestroDashboard() {
                         return;
                       }
 
-                      // Guardar todas las calificaciones secuencialmente (una por una)
+                      // guardar todas las calificaciones
                       const resultados = [];
                       for (const cal of calificacionesAGuardar) {
                         try {
@@ -529,7 +527,6 @@ export function MaestroDashboard() {
                         }
                       }
 
-                      // Contar éxitos y errores
                       const exitosas = resultados.filter(
                         (r) => r.status === "fulfilled"
                       ).length;
@@ -551,7 +548,6 @@ export function MaestroDashboard() {
                         );
                       }
 
-                      // Limpiar notas y observaciones solo si todo fue exitoso
                       if (errores.length === 0) {
                         setNotas({});
                         setObservaciones({});
@@ -756,7 +752,6 @@ export function MaestroDashboard() {
                                 <Botón
                                   variante="secondary"
                                   onClick={() => {
-                                    // revertir cambios desde snapshot
                                     const orig =
                                       originalCalificaciones[String(c.id)];
                                     if (orig) {
