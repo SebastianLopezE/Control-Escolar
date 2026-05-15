@@ -1,17 +1,9 @@
-/* ========================================
-   TAILWIND CSS - CONTROL ESCOLAR
-   ======================================== */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ========================================
-   COMPONENTES PERSONALIZADOS
-   ======================================== */
-
 @layer components {
-  /* ========== ENCABEZADO ========== */
+  /*encabezado*/
   .encabezado {
     @apply bg-gradient-to-r from-blue-600 to-blue-900 text-white shadow-md sticky top-0 z-40;
   }
@@ -28,7 +20,7 @@
     @apply flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/20 border border-white/30 text-white rounded text-sm sm:text-base transition-all hover:bg-white/30 hover:border-white/50 hover:-translate-y-0.5 flex-shrink-0 whitespace-nowrap;
   }
 
-  /* ========== BOTONES ========== */
+  /* botones*/
   .boton {
     @apply px-6 py-3 border-none rounded font-medium cursor-pointer transition-all inline-flex items-center gap-2;
   }
@@ -61,7 +53,7 @@
     @apply px-8 py-4 text-lg;
   }
 
-  /* ========== CONTENEDORES ========== */
+  /* contenedores */
   .contenedor {
     @apply p-8 grid place-items-center min-h-screen bg-gray-100;
   }
@@ -118,7 +110,7 @@
     @apply bg-none border-none text-2xl cursor-pointer text-gray-600 p-0 w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 hover:text-gray-900;
   }
 
-  /* Búsqueda */
+  /* barra de busqueda */
   .barra-busqueda {
     @apply relative flex-1 max-w-xs;
   }
@@ -131,7 +123,7 @@
     @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-400;
   }
 
-  /* Tabla */
+  /* tabla */
   .envoltorio-tabla {
     @apply bg-white rounded-2xl shadow-md overflow-x-auto;
   }
@@ -171,7 +163,6 @@
     @apply bg-gray-50;
   }
 
-  /* Insignias */
   .insignia {
     @apply px-3 py-1 rounded font-semibold text-sm;
   }
@@ -189,7 +180,7 @@
     @apply flex gap-2;
   }
 
-  /* Formularios */
+  /* formularios */
   .envoltorio-formulario {
     @apply flex justify-center;
   }
@@ -238,7 +229,7 @@
     @apply flex justify-end gap-4 mt-8;
   }
 
-  /* Modal */
+  /* modal */
   .modal {
     @apply hidden fixed top-0 left-0 w-full h-full bg-black/50 z-50 items-center justify-center;
   }
@@ -288,7 +279,6 @@
     @apply px-4 py-2 border-2 border-gray-200 rounded text-base min-w-52;
   }
 
-  /* Contenidos específicos */
   .contenedor-reportes {
     @apply max-w-6xl mx-auto p-8;
   }
@@ -313,7 +303,7 @@
     @apply max-w-6xl mx-auto p-8;
   }
 
-  /* Estadísticas */
+  /* estadisticas */
   .cuadricula-estadisticas {
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6;
   }
@@ -330,7 +320,6 @@
     @apply text-3xl font-bold;
   }
 
-  /* Sin datos */
   .sin-datos {
     @apply text-center py-16 text-gray-500;
   }
@@ -339,7 +328,7 @@
     @apply text-lg m-0;
   }
 
-  /* Animaciones */
+  /* animaciones */
   .fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -348,10 +337,6 @@
     animation: slideUp 0.3s ease-in-out;
   }
 }
-
-/* ========================================
-   ESTILOS BASE GLOBALES
-   ======================================== */
 
 * {
   @apply box-border;
@@ -401,10 +386,6 @@ p {
 a {
   @apply text-blue-600 hover:text-blue-700 transition-colors;
 }
-
-/* ========================================
-   ANIMACIONES PERSONALIZADAS
-   ======================================== */
 
 @keyframes fadeIn {
   from {
