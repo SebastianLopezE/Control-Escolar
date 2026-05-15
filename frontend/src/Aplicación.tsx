@@ -5,7 +5,6 @@ import "./styles/main.css";
 
 function App() {
   return (
-    // Envolver la aplicación con el proveedor de autenticación
     <ProveedorAutenticacion>
       <RouterProvider router={router} />
     </ProveedorAutenticacion>
