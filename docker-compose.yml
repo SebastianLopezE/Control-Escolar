@@ -22,7 +22,7 @@ services:
     container_name: control_escolar_api
     depends_on:
       postgres:
-        condition: service_healthy # Asegura que la base de datos esté lista antes de iniciar el backend
+        condition: service_healthy # verificar que la bd este corriendo antes de que inicie todo el back
     environment:
       DB_NAME: control_escolar
       DB_USER: control_user
