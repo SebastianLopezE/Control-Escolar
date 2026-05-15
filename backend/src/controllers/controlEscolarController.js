@@ -139,8 +139,7 @@ exports.eliminarCalificacion = async (req, res) => {
     const calificacion = await calificaciones.findByPk(id);
     if (!calificacion)
       return res.status(404).json({ mensaje: "Calificación no encontrada" });
-
-    // Usamos destroy con paranoid para marcar deleted_at y ocultarla del listado
+    
     await calificacion.destroy();
     res.json({ mensaje: "Calificación eliminada", datos: calificacion });
   } catch (error) {
@@ -215,7 +214,6 @@ exports.crearUsuario = async (req, res) => {
         grupoId = grupo.id;
       }
 
-      // Matrícula: usar la proporcionada o generar una única
       let matriculaFinal =
         matricula && String(matricula).trim() !== ""
           ? String(matricula).trim()
@@ -230,11 +228,11 @@ exports.crearUsuario = async (req, res) => {
             .status(400)
             .json({ mensaje: "La matrícula ya está registrada" });
       } else {
-        // Generar matrícula única de 6 dígitos
+        // crear matricula
         let intentos = 0;
         while (!matriculaFinal && intentos < 50) {
           const candidato = String(Math.floor(100000 + Math.random() * 900000));
-          // comprobar existencia
+          // comprobar que exista
           const existe = await alumnos.findOne({
             where: { matricula: candidato },
           });
