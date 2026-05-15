@@ -66,13 +66,13 @@ module.exports = {
     }
   },
 
-  // 4. login
+  // logica del login
   iniciarSesion: async (req, res) => {
     try {
       const { email, password } = req.body;
       const emailNormalizado = email?.trim().toLowerCase();
 
-      // buscar usuario por email
+      // buscar usuario por correo
       const usuario = await usuarios.findOne({
         where: { email: emailNormalizado },
       });
